@@ -25,13 +25,16 @@ async function initDB() {
     const dbOptions = process.env.DATABASE_URL ? {
       uri: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
-    } : {
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'aein_talk_db'
-    };
-
+    } :{
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 12377, // Aiven ka port aksar 24653 hota hai
+  ssl: {
+    rejectUnauthorized: false // Aiven ke liye ye lazmi hai
+  }
+}
     pool = mysql.createPool(dbOptions);
     const conn = await pool.getConnection();
     console.log('✅ MySQL Connected Successfully');
@@ -120,13 +123,17 @@ app.delete('/api/chats/:id', auth, async (req, res) => {
 });
 
 // Serve frontend - Very Important for Beginner Deployment
-app.use(express.static(__dirname)); 
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) res.sendFile(path.join(__dirname, 'index.html'));
-});
+// Naya Tareeka (Express 5 ke liye)
+// app.get('/:splat*', (req, res) => {
+//     // Aapka code yahan aayega
+// });
 
 // const PORT = process.env.PORT || 3001;
 // app.listen(PORT, '0.0.0.0', () => console.log(`🚀 AEIN TALK Live on port ${PORT}`));
+// Sabse end mein, 404 handler ke liye
+app.use((req, res) => {
+    res.status(404).send("Page not found");
+});
 const PORT = process.env.PORT || 7860;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
